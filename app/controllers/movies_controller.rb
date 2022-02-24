@@ -7,6 +7,8 @@ class MoviesController < ApplicationController
     end
   
     def index
+      session.clear unless request.url.include? "/movies"
+      
       @all_ratings = Movie.uniq.pluck(:rating)
 
       # Update session selected ratings if the ratings query is updated.
