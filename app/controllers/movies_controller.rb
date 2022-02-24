@@ -8,13 +8,39 @@ class MoviesController < ApplicationController
   
     def index
       @all_ratings = Movie.uniq.pluck(:rating)
+
+      # Update session selected ratings if the ratings query is updated.
+      if params[:ratings] != nil && session[:ratings] != params[:ratings]
+        session[:ratings] = params[:ratings] 
+      end
+
+      # Update session sort if the sort query is updated.
+      if params[:sort_by] != nil && session[:sort_by] != params[:sort_by]
+        session[:sort_by] = params[:sort_by]
+      end
+
+      # If anythings is missing from query params and is available in session, get it from session.
+      if params[:ratings] == nil && params[:sort_by] == nil 
+        if session[:ratings] != nil && session[:sort_by] != nil
+          redirect_to movies_path(:sort_by => session[:sort_by], :ratings => session[:ratings])
+        elsif session[:ratings] != nil
+          redirect_to movies_path(:ratings => session[:ratings])
+        elsif session[:sort_by] != nil
+          redirect_to movies_path(:sort_by => session[:sort_by])
+        end
+      elsif params[:ratings] == nil && session[:ratings] != nil
+        redirect_to movies_path(:sort_by => params[:sort_by], :ratings => session[:ratings])
+      elsif params[:sort_by] == nil && session[:sort_by] != nil
+        redirect_to movies_path(:sort_by => session[:sort_by], :ratings => params[:ratings])
+      end
+
       @selected = params[:ratings] == nil ? @all_ratings : params[:ratings].keys
       # puts "params[:ratings]",params[:ratings]
       # puts "selected", @selected
       if params[:sort_by]
-        @movies = Movie.all.order(params[:sort_by])
+        @movies = Movie.where({rating: @selected}).order(params[:sort_by])
       else
-        @movies = Movie.all.where({rating: @selected})
+        @movies = Movie.where({rating: @selected})
       end
     end
   
